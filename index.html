@@ -1,1 +1,175 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBazar BD</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f8f5;color:#18352d}
+header{background:#075b45;color:white;padding:18px;text-align:center}
+header h1{margin:0}header span{color:#ffab45}
+.search{padding:15px;display:flex;gap:5px}
+input,textarea{padding:12px;border:1px solid #ccc;border-radius:8px;width:100%;font-size:15px}
+button{padding:12px;border:0;border-radius:8px;background:#07845f;color:white;font-weight:bold;cursor:pointer}
+.search button{width:90px}
+.categories{display:flex;gap:8px;padding:10px;overflow:auto}
+.categories button{white-space:nowrap}
+h2{padding:0 15px}
+.products{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px}
+.card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px #ddd}
+.card img{width:100%;height:140px;object-fit:cover}
+.info{padding:10px}
+.info h3{margin:5px 0}
+.price{color:#07845f;font-size:20px;font-weight:bold}
+.order{width:100%;margin-top:10px}
+#modal{display:none;position:fixed;inset:0;background:#0009;align-items:center;justify-content:center;padding:15px}
+.form{background:white;padding:20px;border-radius:15px;width:100%;max-width:400px}
+.form input,.form textarea{margin:7px 0}
+footer{background:#075b45;color:white;text-align:center;padding:25px;margin-top:20px}
+@media(min-width:650px){.products{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
 
+<header>
+<h1>SmartBazar <span>BD</span></h1>
+<p>আপনার পছন্দ, আপনার বাজার 🛍️</p>
+</header>
+
+<div class="search">
+<input id="search" placeholder="পণ্য খুঁজুন..." oninput="showProducts()">
+<button onclick="showProducts()">খুঁজুন</button>
+</div>
+
+<div class="categories">
+<button onclick="filterCat('সব')">সব পণ্য</button>
+<button onclick="filterCat('ইলেকট্রনিক্স')">ইলেকট্রনিক্স</button>
+<button onclick="filterCat('ফ্যাশন')">ফ্যাশন</button>
+<button onclick="filterCat('ঘর')">ঘর ও রান্নাঘর</button>
+<button onclick="filterCat('অন্যান্য')">অন্যান্য</button>
+</div>
+
+<h2>আমাদের পণ্যসমূহ</h2>
+<div class="products" id="products"></div>
+
+<div id="modal">
+<div class="form">
+<h2>অর্ডার করুন</h2>
+<p id="productName"></p>
+<input id="customer" placeholder="আপনার নাম">
+<input id="phone" placeholder="মোবাইল নম্বর">
+<textarea id="address" placeholder="সম্পূর্ণ ঠিকানা"></textarea>
+<button onclick="sendOrder()" style="width:100%">WhatsApp-এ অর্ডার করুন</button>
+<button onclick="closeOrder()" style="width:100%;margin-top:8px;background:#777">বন্ধ করুন</button>
+</div>
+</div>
+
+<footer>
+<h2>SmartBazar BD</h2>
+<p>ধন্যবাদ আমাদের সঙ্গে থাকার জন্য ❤️</p>
+</footer>
+
+<script>
+// নিজের WhatsApp নম্বর এখানে বসাও
+const WHATSAPP_NUMBER = "8801916551788";
+
+// নতুন পণ্য যোগ করতে এই তালিকায় নতুন লাইন যোগ করবে
+const items = [
+{
+name:"মোবাইল স্ট্যান্ড",
+cat:"ইলেকট্রনিক্স",
+price:350,
+image:"https://placehold.co/400x300?text=Mobile+Stand",
+desc:"সুন্দর ও মজবুত মোবাইল স্ট্যান্ড"
+},
+{
+name:"কিচেন কাটার",
+cat:"ঘর",
+price:450,
+image:"https://placehold.co/400x300?text=Kitchen+Cutter",
+desc:"রান্নাঘরের প্রয়োজনীয় পণ্য"
+},
+{
+name:"স্টাইলিশ টি-শার্ট",
+cat:"ফ্যাশন",
+price:550,
+image:"https://placehold.co/400x300?text=T-Shirt",
+desc:"আরামদায়ক টি-শার্ট"
+},
+{
+name:"ঘড়ি",
+cat:"অন্যান্য",
+price:750,
+image:"https://placehold.co/400x300?text=Watch",
+desc:"সুন্দর হাতঘড়ি"
+}
+];
+
+let category="সব";
+let selectedProduct=null;
+
+function showProducts(){
+let q=document.getElementById("search").value.toLowerCase();
+let data=items.filter(p=>
+(p.name.toLowerCase().includes(q)) &&
+(category==="সব" || p.cat===category)
+);
+document.getElementById("products").innerHTML=data.map((p,i)=>`
+<div class="card">
+<img src="${p.image}" alt="${p.name}">
+<div class="info">
+<h3>${p.name}</h3>
+<p>${p.desc}</p>
+<div class="price">৳${p.price}</div>
+<button class="order" onclick="openOrder('${p.name.replace(/'/g,"")}')">অর্ডার করুন</button>
+</div>
+</div>
+`).join("") || "<p>কোনো পণ্য পাওয়া যায়নি</p>";
+}
+
+function filterCat(c){
+category=c;
+showProducts();
+}
+
+function openOrder(name){
+selectedProduct=items.find(p=>p.name===name);
+document.getElementById("productName").innerText=
+selectedProduct.name+" - ৳"+selectedProduct.price;
+document.getElementById("modal").style.display="flex";
+}
+
+function closeOrder(){
+document.getElementById("modal").style.display="none";
+}
+
+function sendOrder(){
+let name=document.getElementById("customer").value.trim();
+let phone=document.getElementById("phone").value.trim();
+let address=document.getElementById("address").value.trim();
+
+if(!name || !phone || !address){
+alert("সব তথ্য পূরণ করুন");
+return;
+}
+
+let message=
+"নতুন অর্ডার - SmartBazar BD\n"+
+"পণ্য: "+selectedProduct.name+"\n"+
+"দাম: ৳"+selectedProduct.price+"\n"+
+"নাম: "+name+"\n"+
+"মোবাইল: "+phone+"\n"+
+"ঠিকানা: "+address;
+
+window.open(
+"https://wa.me/"+WHATSAPP_NUMBER+
+"?text="+encodeURIComponent(message),
+"_blank"
+);
+}
+
+showProducts();
+</script>
+</body>
+  </html>
